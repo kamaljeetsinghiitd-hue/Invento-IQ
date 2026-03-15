@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Invento-IQ | Multi-Product Scheduler</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#09111f; --bg2:#101d2e; --bg3:#162236; --border:#1e3050;
+  --amber:#f59e0b; --blue:#3b82f6; --green:#10b981; --red:#ef4444;
+  --purple:#8b5cf6; --cyan:#06b6d4;
+  --text:#e2e8f0; --muted:#64748b; --soft:#94a3b8;
+  --pA:#f59e0b; --pB:#3b82f6; --pC:#10b981; --idle:#1e3050;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+/* TOPBAR */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.brand{display:flex;align-items:center;gap:8px;}
+.brand-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--amber),#d97706);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#000;}
+.brand-name{font-size:16px;font-weight:800;letter-spacing:-0.5px;}
+.brand-name span{color:var(--amber);}
+.badge{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;color:var(--soft);font-family:'JetBrains Mono',monospace;}
+
+/* TABS */
+.tabs{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:2px;overflow-x:auto;}
+.tab{background:none;border:none;cursor:pointer;padding:12px 14px;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:0.5px;}
+.tab.active{color:var(--amber);border-bottom-color:var(--amber);}
+
+.page{padding:20px;max-width:1100px;margin:0 auto;}
+.screen{display:none;}.screen.active{display:block;}
+
+/* TYPOGRAPHY */
+.ptitle{font-size:20px;font-weight:800;letter-spacing:-0.5px;}
+.psub{color:var(--muted);font-size:13px;margin-top:4px;}
+
+/* LEGEND */
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--soft);}
+.leg-dot{width:12px;height:12px;border-radius:3px;}
+
+/* GANTT CHART */
+.gantt-wrap{background:var(--bg2);border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px;}
+.gantt-header{display:grid;grid-template-columns:100px repeat(6,1fr);border-bottom:1px solid var(--border);}
+.gantt-hcell{padding:10px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);text-align:center;border-right:1px solid var(--border);}
+.gantt-hcell:last-child{border-right:none;}
+.gantt-row{display:grid;grid-template-columns:100px repeat(6,1fr);border-bottom:1px solid var(--border);}
+.gantt-row:last-child{border-bottom:none;}
+.gantt-label{padding:12px 10px;font-size:12px;font-weight:700;color:var(--soft);border-right:1px solid var(--border);display:flex;align-items:center;}
+.gantt-cell{padding:6px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:4px;}
+.gantt-cell:last-child{border-right:none;}
+.prod-block{border-radius:6px;padding:6px 8px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.prod-block:hover{filter:brightness(1.2);transform:scale(1.02);}
+.prod-block.pA{background:#f59e0b20;border:1px solid #f59e0b50;color:var(--amber);}
+.prod-block.pB{background:#3b82f620;border:1px solid #3b82f650;color:var(--blue);}
+.prod-block.pC{background:#10b98120;border:1px solid #10b98150;color:var(--green);}
+.prod-block.warn{border-style:dashed;opacity:0.7;}
+.prod-block.idle{background:var(--bg3);border:1px dashed var(--border);color:var(--muted);}
+.block-units{font-size:10px;font-weight:600;margin-top:2px;opacity:0.8;}
+.warn-icon{position:absolute;top:4px;right:4px;font-size:9px;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px;}
+@media(min-width:500px){.stats-row{grid-template-columns:repeat(4,1fr);}}
+.stat{background:var(--bg2);border-radius:12px;padding:14px;border:1px solid var(--border);}
+.stat-v{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;}
+
+/* DETAIL PANEL */
+.detail-panel{background:var(--bg2);border-radius:14px;border:1px solid var(--amber);padding:18px;margin-bottom:16px;display:none;}
+.detail-panel.visible{display:block;}
+.dp-title{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.dp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.dp-item{background:var(--bg3);border-radius:8px;padding:10px;border:1px solid var(--border);}
+.dp-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+.dp-val{font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+
+/* RULES */
+.rules-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px;}
+@media(min-width:600px){.rules-grid{grid-template-columns:1fr 1fr;}}
+.rule-card{background:var(--bg2);border-radius:14px;padding:18px;border:1px solid var(--border);}
+.rule-num{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--amber),#d97706);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#000;margin-bottom:12px;}
+.rule-title{font-size:14px;font-weight:700;margin-bottom:8px;}
+.rule-desc{font-size:13px;color:var(--soft);line-height:1.6;}
+.rule-example{background:var(--bg3);border-radius:8px;padding:10px;margin-top:10px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--amber);line-height:1.8;}
+
+/* MATRIX */
+.matrix-wrap{background:var(--bg2);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px;}
+.matrix-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);}
+.matrix-row:last-child{border-bottom:none;}
+.matrix-label{width:110px;font-size:12px;font-weight:700;color:var(--soft);flex-shrink:0;}
+.matrix-val{flex:1;display:flex;align-items:center;gap:8px;}
+.compat-dot{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.compat-yes{background:#10b98120;border:1px solid #10b98140;color:var(--green);}
+.compat-no{background:#ef444415;border:1px solid #ef444430;color:var(--red);}
+
+/* CHANGEOVER */
+.changeover-table{width:100%;border-collapse:collapse;}
+.changeover-table th{padding:10px 14px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg3);}
+.changeover-table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);}
+.changeover-table tr:last-child td{border-bottom:none;}
+.time-chip{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;}
+.time-ok{background:#10b98115;color:var(--green);}
+.time-warn{background:#f59e0b15;color:var(--amber);}
+.time-bad{background:#ef444415;color:var(--red);}
+
+/* OPTIMIZER */
+.opt-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+.opt-card{background:var(--bg2);border-radius:14px;padding:18px;border:1px solid var(--border);}
+.opt-card.winner{border-color:var(--green);}
+.opt-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.seq-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.seq-chip{padding:5px 10px;border-radius:6px;font-size:12px;font-weight:700;}
+.seq-arrow{color:var(--muted);font-size:14px;}
+.saving-box{background:var(--bg3);border-radius:8px;padding:12px;margin-top:12px;border:1px solid var(--border);}
+
+/* AI BOX */
+.ai-box{background:linear-gradient(135deg,#1a1a0a,var(--bg2));border:1px solid #f59e0b30;border-radius:14px;padding:16px;margin-bottom:14px;}
+.ai-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:8px;}
+.ai-text{font-size:13px;color:var(--soft);line-height:1.7;}
+
+/* BTNS */
+.btn-p{background:linear-gradient(135deg,var(--amber),#d97706);border:none;border-radius:8px;padding:9px 16px;color:#000;font-weight:800;font-size:12px;cursor:pointer;font-family:'Syne',sans-serif;}
+.btn-g{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 16px;color:var(--soft);font-weight:600;font-size:12px;cursor:pointer;font-family:'Syne',sans-serif;}
+.btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+
+/* DRAG HANDLE */
+.drag-zone{background:var(--bg3);border-radius:12px;padding:16px;border:2px dashed var(--border);margin-bottom:12px;}
+.drag-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.draggable-block{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:grab;margin:4px;user-select:none;transition:transform 0.15s;}
+.draggable-block:hover{transform:scale(1.05);}
+
+/* PULSE */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.live{animation:pulse 2s infinite;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">I</div>
+    <span class="brand-name">Invento<span>-IQ</span> <span style="color:var(--muted);font-weight:400;font-size:12px">Scheduler</span></span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="badge">W11 · Mar 15–21</div>
+    <div style="background:#f59e0b20;border:1px solid #f59e0b40;border-radius:20px;padding:4px 10px;font-size:11px;color:var(--amber);font-weight:700;display:flex;align-items:center;gap:5px;">
+      <span class="live" style="width:6px;height:6px;border-radius:50%;background:var(--amber);display:inline-block;"></span>AI Active
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="show('gantt',this)">📅 Gantt View</button>
+  <button class="tab" onclick="show('rules',this)">📐 Scheduling Rules</button>
+  <button class="tab" onclick="show('compat',this)">🔗 Line Compatibility</button>
+  <button class="tab" onclick="show('changeover',this)">⏱️ Changeover Times</button>
+  <button class="tab" onclick="show('optimizer',this)">⚡ AI Optimizer</button>
+  <button class="tab" onclick="show('editor',this)">✏️ Manual Editor</button>
+</div>
+
+<div class="page">
+
+<!-- GANTT -->
+<div id="screen-gantt" class="screen active">
+  <div class="ptitle">Multi-Product Gantt Schedule</div>
+  <p class="psub">Click any block to see details · Week 11, March 2026</p>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Product A</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Product B</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Product C</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--bg3);border:1px dashed var(--muted)"></div>Idle / Maintenance</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>⚠️ Material Risk</div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="detail-panel" id="detail-panel">
+    <div class="dp-title">
+      <span id="dp-title-text">Block Details</span>
+      <button onclick="document.getElementById('detail-panel').classList.remove('visible')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div class="dp-grid" id="dp-grid"></div>
+    <div id="dp-ai" class="ai-box" style="margin-bottom:0"></div>
+  </div>
+
+  <div class="gantt-wrap">
+    <div class="gantt-header">
+      <div class="gantt-hcell">Line</div>
+      <div class="gantt-hcell">Mon 15</div>
+      <div class="gantt-hcell">Tue 16</div>
+      <div class="gantt-hcell">Wed 17</div>
+      <div class="gantt-hcell">Thu 18</div>
+      <div class="gantt-hcell">Fri 19</div>
+      <div class="gantt-hcell">Sat 20</div>
+    </div>
+
+    <!-- LINE 1 - SHIFT 1 -->
+    <div class="gantt-row">
+      <div class="gantt-label" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <span style="font-size:11px;color:var(--amber)">LINE 1</span>
+        <span style="font-size:10px;color:var(--muted)">Shift 1</span>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pA" onclick="showDetail('A','L1S1','Mon',120,'Steel: 240kg, Plastic: 144kg','No issues','94%')">
+          Product A<div class="block-units">120 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pA" onclick="showDetail('A','L1S1','Tue',120,'Steel: 240kg, Plastic: 144kg','No issues','96%')">
+          Product A<div class="block-units">120 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pB warn" onclick="showDetail('B','L1S1','Wed',100,'Steel: 150kg, Copper: 50m','⚠️ Steel running low','78%')">
+          Product B<div class="block-units">100 units</div>
+          <span class="warn-icon">⚠️</span>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pA" onclick="showDetail('A','L1S1','Thu',110,'Steel: 220kg, Plastic: 132kg','Steel restocked','92%')">
+          Product A<div class="block-units">110 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pA" onclick="showDetail('A','L1S1','Fri',120,'Steel: 240kg, Plastic: 144kg','No issues','95%')">
+          Product A<div class="block-units">120 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pB" onclick="showDetail('B','L1S1','Sat',100,'Steel: 150kg, Copper: 50m','No issues','90%')">
+          Product B<div class="block-units">100 units</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINE 1 - SHIFT 2 -->
+    <div class="gantt-row">
+      <div class="gantt-label" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <span style="font-size:11px;color:var(--amber)">LINE 1</span>
+        <span style="font-size:10px;color:var(--muted)">Shift 2</span>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pA" onclick="showDetail('A','L1S2','Mon',120,'Steel: 240kg, Plastic: 144kg','No issues','91%')">
+          Product A<div class="block-units">120 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pA" onclick="showDetail('A','L1S2','Tue',120,'Steel: 240kg, Plastic: 144kg','No issues','93%')">
+          Product A<div class="block-units">120 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pB warn" onclick="showDetail('B','L1S2','Wed',80,'Steel: 120kg, Copper: 40m','⚠️ Steel low — reduced qty','70%')">
+          Product B<div class="block-units">80 units</div>
+          <span class="warn-icon">⚠️</span>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pA" onclick="showDetail('A','L1S2','Thu',110,'Steel: 220kg, Plastic: 132kg','No issues','91%')">
+          Product A<div class="block-units">110 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pA" onclick="showDetail('A','L1S2','Fri',120,'Steel: 240kg, Plastic: 144kg','No issues','94%')">
+          Product A<div class="block-units">120 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pB" onclick="showDetail('B','L1S2','Sat',100,'Steel: 150kg, Copper: 50m','No issues','88%')">
+          Product B<div class="block-units">100 units</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINE 2 - SHIFT 1 -->
+    <div class="gantt-row">
+      <div class="gantt-label" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <span style="font-size:11px;color:var(--blue)">LINE 2</span>
+        <span style="font-size:10px;color:var(--muted)">Shift 1</span>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pB" onclick="showDetail('B','L2S1','Mon',80,'Steel: 120kg, Copper: 40m','No issues','89%')">
+          Product B<div class="block-units">80 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pC" onclick="showDetail('C','L2S1','Tue',90,'Aluminium: 270kg, Copper: 108m','No issues','92%')">
+          Product C<div class="block-units">90 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pC" onclick="showDetail('C','L2S1','Wed',90,'Aluminium: 270kg, Copper: 108m','No material risk - safe!','91%')">
+          Product C<div class="block-units">90 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pC" onclick="showDetail('C','L2S1','Thu',90,'Aluminium: 270kg, Copper: 108m','No issues','93%')">
+          Product C<div class="block-units">90 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pC" onclick="showDetail('C','L2S1','Fri',90,'Aluminium: 270kg, Copper: 108m','No issues','92%')">
+          Product C<div class="block-units">90 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pC" onclick="showDetail('C','L2S1','Sat',80,'Aluminium: 240kg, Copper: 96m','No issues','88%')">
+          Product C<div class="block-units">80 units</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINE 2 - SHIFT 2 -->
+    <div class="gantt-row">
+      <div class="gantt-label" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <span style="font-size:11px;color:var(--blue)">LINE 2</span>
+        <span style="font-size:10px;color:var(--muted)">Shift 2</span>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pC" onclick="showDetail('C','L2S2','Mon',80,'Aluminium: 240kg, Copper: 96m','No issues','87%')">
+          Product C<div class="block-units">80 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pC" onclick="showDetail('C','L2S2','Tue',90,'Aluminium: 270kg, Copper: 108m','No issues','90%')">
+          Product C<div class="block-units">90 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pC" onclick="showDetail('C','L2S2','Wed',90,'Aluminium: 270kg, Copper: 108m','Switched from B to C — safe','91%')">
+          Product C<div class="block-units">90 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block idle" onclick="showDetail('IDLE','L2S2','Thu',0,'—','Planned maintenance','—')">
+          Maintenance<div class="block-units">4 hrs</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pB" onclick="showDetail('B','L2S2','Fri',90,'Steel: 135kg, Copper: 45m','No issues','89%')">
+          Product B<div class="block-units">90 units</div>
+        </div>
+      </div>
+      <div class="gantt-cell">
+        <div class="prod-block pC" onclick="showDetail('C','L2S2','Sat',80,'Aluminium: 240kg, Copper: 96m','No issues','86%')">
+          Product C<div class="block-units">80 units</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-v" style="color:var(--amber)">2,340</div><div class="stat-l">Total Units</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--green)">91%</div><div class="stat-l">Avg Efficiency</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--red)">2</div><div class="stat-l">Risk Slots</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--blue)">6</div><div class="stat-l">Changeovers</div></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-p">✅ Approve Schedule</button>
+    <button class="btn-g">🔄 Re-optimize</button>
+    <button class="btn-g">📋 Export to Excel</button>
+  </div>
+</div>
+
+<!-- RULES -->
+<div id="screen-rules" class="screen">
+  <div class="ptitle">📐 AI Scheduling Rules</div>
+  <p class="psub">The 4 rules the AI follows to build the optimal schedule</p>
+
+  <div class="rules-grid" style="margin-top:20px">
+    <div class="rule-card">
+      <div class="rule-num">1</div>
+      <div class="rule-title">Material Availability</div>
+      <div class="rule-desc">Never schedule a product if its raw material is unavailable or will run out mid-shift. AI checks inventory before assigning.</div>
+      <div class="rule-example">
+        Product A needs Steel →<br/>
+        Steel runs out Wed →<br/>
+        ∴ Switch Wed to Product B/C<br/>
+        ∴ Product A resumes Thu
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">2</div>
+      <div class="rule-title">Line Compatibility</div>
+      <div class="rule-desc">Each product can only run on specific lines. AI never assigns a product to an incompatible line.</div>
+      <div class="rule-example">
+        Line 1 → Product A ✅, B ✅, C ❌<br/>
+        Line 2 → Product A ❌, B ✅, C ✅<br/>
+        ∴ Product A never on Line 2<br/>
+        ∴ Product C never on Line 1
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">3</div>
+      <div class="rule-title">Minimise Changeovers</div>
+      <div class="rule-desc">Every time a line switches products, it wastes 2–4 hours on cleaning and setup. AI groups same products together.</div>
+      <div class="rule-example">
+        Bad:  A→C→A→B→A (5 switches)<br/>
+        Good: A→A→A→B→C (2 switches)<br/>
+        Saving: 6–12 hrs/week<br/>
+        = 180–360 extra units/week!
+      </div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">4</div>
+      <div class="rule-title">Demand Priority</div>
+      <div class="rule-desc">High priority orders are scheduled first. AI uses priority tiers to ensure critical orders ship on time.</div>
+      <div class="rule-example">
+        P1: Urgent orders (today deadline)<br/>
+        P2: This week forecast demand<br/>
+        P3: Safety stock build-up<br/>
+        P4: Next week pre-production
+      </div>
+    </div>
+  </div>
+
+  <div class="ai-box" style="margin-top:16px">
+    <div class="ai-tag">🧠 AI Decision This Week</div>
+    <p class="ai-text">Wednesday was the key challenge — Steel Rods shortage meant Product A couldn't run at full capacity. AI automatically switched Line 1 to <strong style="color:var(--text)">Product B</strong> (lower steel consumption) and Line 2 to <strong style="color:var(--text)">Product C</strong> (no steel needed). This recovered <strong style="color:var(--green)">340 units</strong> that would have been lost.</p>
+  </div>
+</div>
+
+<!-- COMPATIBILITY -->
+<div id="screen-compat" class="screen">
+  <div class="ptitle">🔗 Line × Product Compatibility</div>
+  <p class="psub">Which products can run on which lines — the AI never violates these rules</p>
+
+  <div class="matrix-wrap" style="margin-top:20px">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:110px 1fr 1fr 1fr">
+      <span style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Line / Product</span>
+      <span style="font-size:12px;font-weight:700;color:var(--amber);text-align:center">Product A</span>
+      <span style="font-size:12px;font-weight:700;color:var(--blue);text-align:center">Product B</span>
+      <span style="font-size:12px;font-weight:700;color:var(--green);text-align:center">Product C</span>
+    </div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:110px 1fr 1fr 1fr;align-items:center">
+      <span style="font-size:13px;font-weight:700;color:var(--amber)">Line 1</span>
+      <div style="display:flex;justify-content:center"><div class="compat-dot compat-yes">✓</div></div>
+      <div style="display:flex;justify-content:center"><div class="compat-dot compat-yes">✓</div></div>
+      <div style="display:flex;justify-content:center"><div class="compat-dot compat-no">✗</div></div>
+    </div>
+    <div style="padding:14px 16px;display:grid;grid-template-columns:110px 1fr 1fr 1fr;align-items:center">
+      <span style="font-size:13px;font-weight:700;color:var(--blue)">Line 2</span>
+      <div style="display:flex;justify-content:center"><div class="compat-dot compat-no">✗</div></div>
+      <div style="display:flex;justify-content:center"><div class="compat-dot compat-yes">✓</div></div>
+      <div style="display:flex;justify-content:center"><div class="compat-dot compat-yes">✓</div></div>
+    </div>
+  </div>
+
+  <div class="rules-grid">
+    <div class="rule-card">
+      <div style="font-size:18px;margin-bottom:10px">🏭</div>
+      <div class="rule-title">Why Line 1 can't do Product C?</div>
+      <div class="rule-desc">Line 1 uses a steel press machine. Product C requires an aluminium forming die which is only fitted on Line 2. Switching would need 8 hours of retooling — not economical.</div>
+    </div>
+    <div class="rule-card">
+      <div style="font-size:18px;margin-bottom:10px">⚙️</div>
+      <div class="rule-title">Why Line 2 can't do Product A?</div>
+      <div class="rule-desc">Product A requires high-pressure steel forming at 800°C. Line 2's furnace only reaches 600°C. Running Product A on Line 2 would result in quality failure.</div>
+    </div>
+  </div>
+
+  <div class="ai-box">
+    <div class="ai-tag">🧠 AI Insight — Product B is Strategic</div>
+    <p class="ai-text">Product B can run on <strong style="color:var(--text)">both lines</strong> — making it the most flexible product. AI uses Product B as a "buffer" product to fill gaps when other products are blocked by material shortages or maintenance windows. This is why you see Product B appear on both lines across the week.</p>
+  </div>
+</div>
+
+<!-- CHANGEOVER -->
+<div id="screen-changeover" class="screen">
+  <div class="ptitle">⏱️ Changeover Time Matrix</div>
+  <p class="psub">Time lost when switching from one product to another on the same line</p>
+
+  <div class="matrix-wrap" style="margin-top:20px">
+    <table class="changeover-table" style="width:100%">
+      <tr>
+        <th>From → To</th>
+        <th>→ Product A</th>
+        <th>→ Product B</th>
+        <th>→ Product C</th>
+      </tr>
+      <tr>
+        <td style="font-weight:700;color:var(--amber)">Product A →</td>
+        <td><span class="time-chip time-ok">0 hrs</span></td>
+        <td><span class="time-chip time-warn">2.5 hrs</span></td>
+        <td><span class="time-chip time-bad">N/A</span></td>
+      </tr>
+      <tr>
+        <td style="font-weight:700;color:var(--blue)">Product B →</td>
+        <td><span class="time-chip time-warn">2.0 hrs</span></td>
+        <td><span class="time-chip time-ok">0 hrs</span></td>
+        <td><span class="time-chip time-warn">1.5 hrs</span></td>
+      </tr>
+      <tr>
+        <td style="font-weight:700;color:var(--green)">Product C →</td>
+        <td><span class="time-chip time-bad">N/A</span></td>
+        <td><span class="time-chip time-warn">1.5 hrs</span></td>
+        <td><span class="time-chip time-ok">0 hrs</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="stats-row" style="margin-top:16px">
+    <div class="stat"><div class="stat-v" style="color:var(--red)">6</div><div class="stat-l">Changeovers This Week</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--amber)">11 hrs</div><div class="stat-l">Total Time Lost</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--green)">330</div><div class="stat-l">Units Lost to Changeover</div></div>
+    <div class="stat"><div class="stat-v" style="color:var(--blue)">₹82k</div><div class="stat-l">Revenue Impact</div></div>
+  </div>
+
+  <div class="ai-box">
+    <div class="ai-tag">🧠 AI Optimization Opportunity</div>
+    <p class="ai-text">By resequencing Week 12 to <strong style="color:var(--text)">A→A→A→B→B→C</strong> instead of mixing products daily, changeovers can be reduced from 6 to <strong style="color:var(--green)">2 per week</strong>. This recovers <strong style="color:var(--green)">220 units</strong> and saves approximately <strong style="color:var(--green)">₹55,000/week</strong>.</p>
+  </div>
+</div>
+
+<!-- OPTIMIZER -->
+<div id="screen-optimizer" class="screen">
+  <div class="ptitle">⚡ AI Schedule Optimizer</div>
+  <p class="psub">AI compares current plan vs optimized plan — click to apply</p>
+
+  <div class="opt-compare" style="margin-top:20px">
+    <div class="opt-card">
+      <div class="opt-tag" style="color:var(--red)">❌ Current Plan (Manual)</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Mixed daily — not optimized</div>
+      <div class="seq-row">
+        <span class="seq-chip" style="background:#f59e0b20;color:var(--amber)">A</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#3b82f620;color:var(--blue)">B</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#f59e0b20;color:var(--amber)">A</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#10b98120;color:var(--green)">C</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#3b82f620;color:var(--blue)">B</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#f59e0b20;color:var(--amber)">A</span>
+      </div>
+      <div class="saving-box">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Performance</div>
+        <div style="font-size:13px;display:flex;flex-direction:column;gap:4px">
+          <div>Changeovers: <span class="mono" style="color:var(--red)">6</span></div>
+          <div>Time lost: <span class="mono" style="color:var(--red)">11 hrs</span></div>
+          <div>Output: <span class="mono" style="color:var(--red)">2,340 units</span></div>
+          <div>Efficiency: <span class="mono" style="color:var(--red)">78%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="opt-card winner">
+      <div class="opt-tag" style="color:var(--green)">✅ AI Optimized Plan</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Grouped by product — minimal changeover</div>
+      <div class="seq-row">
+        <span class="seq-chip" style="background:#f59e0b20;color:var(--amber)">A</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#f59e0b20;color:var(--amber)">A</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#f59e0b20;color:var(--amber)">A</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#3b82f620;color:var(--blue)">B</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#3b82f620;color:var(--blue)">B</span>
+        <span class="seq-arrow">→</span>
+        <span class="seq-chip" style="background:#10b98120;color:var(--green)">C</span>
+      </div>
+      <div class="saving-box" style="border-color:var(--green)">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Performance</div>
+        <div style="font-size:13px;display:flex;flex-direction:column;gap:4px">
+          <div>Changeovers: <span class="mono" style="color:var(--green)">2</span></div>
+          <div>Time saved: <span class="mono" style="color:var(--green)">+7.5 hrs</span></div>
+          <div>Output: <span class="mono" style="color:var(--green)">2,565 units</span></div>
+          <div>Efficiency: <span class="mono" style="color:var(--green)">92%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ai-box">
+    <div class="ai-tag">🧠 AI Optimization Summary</div>
+    <p class="ai-text">
+      The optimized schedule produces <strong style="color:var(--green)">225 extra units (+9.6%)</strong> with the same resources.
+      Changeovers drop from 6 to 2, recovering 7.5 hours of production time.
+      Estimated weekly revenue gain: <strong style="color:var(--green)">₹1,12,500</strong>.
+      Annual impact: <strong style="color:var(--green)">₹58 Lakhs</strong> additional revenue at zero extra cost.
+    </p>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-p" onclick="alert('✅ Optimized plan applied! Gantt view updated.')">⚡ Apply Optimized Plan</button>
+    <button class="btn-g">📊 Download Comparison Report</button>
+  </div>
+</div>
+
+<!-- MANUAL EDITOR -->
+<div id="screen-editor" class="screen">
+  <div class="ptitle">✏️ Manual Schedule Editor</div>
+  <p class="psub">Drag products to reassign slots — AI validates in real time</p>
+
+  <div class="ai-box" style="margin-top:16px">
+    <div class="ai-tag">🧠 How to use</div>
+    <p class="ai-text" style="font-size:12px">In the real product, you'll drag product blocks between slots. AI instantly validates each move against compatibility rules, material availability and changeover time. Invalid moves are blocked with explanation.</p>
+  </div>
+
+  <div class="drag-zone">
+    <div class="drag-title">Available Products</div>
+    <div class="draggable-block" style="background:#f59e0b20;border:1px solid #f59e0b50;color:var(--amber)">📦 Product A — 120 units</div>
+    <div class="draggable-block" style="background:#3b82f620;border:1px solid #3b82f650;color:var(--blue)">📦 Product B — 100 units</div>
+    <div class="draggable-block" style="background:#10b98120;border:1px solid #10b98150;color:var(--green)">📦 Product C — 90 units</div>
+  </div>
+
+  <div class="gantt-wrap">
+    <div class="gantt-header">
+      <div class="gantt-hcell">Line</div>
+      <div class="gantt-hcell">Mon</div>
+      <div class="gantt-hcell">Tue</div>
+      <div class="gantt-hcell">Wed</div>
+      <div class="gantt-hcell">Thu</div>
+      <div class="gantt-hcell">Fri</div>
+      <div class="gantt-hcell">Sat</div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-label"><span style="font-size:11px;color:var(--amber)">LINE 1</span></div>
+      <div class="gantt-cell"><div class="prod-block pA" onclick="editSlot(this,'L1 Mon')">Product A<div class="block-units">120 units</div></div></div>
+      <div class="gantt-cell"><div class="prod-block pA" onclick="editSlot(this,'L1 Tue')">Product A<div class="block-units">120 units</div></div></div>
+      <div class="gantt-cell"><div class="prod-block pB warn" onclick="editSlot(this,'L1 Wed')">Product B<div class="block-units">80 units</div><span class="warn-icon">⚠️</span></div></div>
+      <div class="gantt-cell"><div class="prod-block pA" onclick="editSlot(this,'L1 Thu')">Product A<div class="block-units">110 units</div></div></div>
+      <div class="gantt-cell"><div class="prod-block pA" onclick="editSlot(this,'L1 Fri')">Product A<div class="block-units">120 units</div></div></div>
+      <div class="gantt-cell"><div class="prod-block pB" onclick="editSlot(this,'L1 Sat')">Product B<div class="block-units">100 units</div></div></div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-label"><span style="font-size:11px;color:var(--blue)">LINE 2</span></div>
+      <div class="gantt-cell"><div class="prod-block pB" onclick="editSlot(this,'L2 Mon')">Product B<div class="block-units">80 units</div></div></div>
+      <div class="gantt-cell"><div class="prod-block pC" onclick="editSlot(this,'L2 Tue')">Product C<div class="block-units">90 units</div></div></div>
+      <div class="gantt-cell"><div class="prod-block pC" onclick="editSlot(this,'L2 Wed')">Product C<div class="block-units">90 units</div></div></div>
+      <div class="gantt-cell"><div class="prod-block idle" onclick="editSlot(this,'L2 Thu')">Maintenance<div class="block-units">4 hrs</div></div></div>
+      <div class="gantt-cell"><div class="prod-block pC" onclick="editSlot(this,'L2 Fri')">Product C<div class="block-units">90 units</div></div></div>
+      <div class="gantt-cell"><div class="prod-block pC" onclick="editSlot(this,'L2 Sat')">Product C<div class="block-units">80 units</div></div></div>
+    </div>
+  </div>
+
+  <div id="edit-feedback" style="display:none;background:var(--bg2);border:1px solid var(--amber);border-radius:12px;padding:16px;margin-top:14px">
+    <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:8px">✏️ Editing Slot: <span id="edit-slot-name"></span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-p" style="background:linear-gradient(135deg,#f59e0b,#d97706)" onclick="document.getElementById('edit-feedback').style.display='none'">Set Product A</button>
+      <button class="btn-p" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:white" onclick="document.getElementById('edit-feedback').style.display='none'">Set Product B</button>
+      <button class="btn-p" style="background:linear-gradient(135deg,#10b981,#059669);color:white" onclick="document.getElementById('edit-feedback').style.display='none'">Set Product C</button>
+      <button class="btn-g" onclick="document.getElementById('edit-feedback').style.display='none'">Cancel</button>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-p">✅ Save Schedule</button>
+    <button class="btn-g" onclick="alert('AI is validating your manual changes...\n\n✅ Line compatibility: OK\n✅ Material availability: OK\n⚠️ Changeover warning: Wed→Thu on Line 1 adds 2.5 hrs')">🧠 Validate with AI</button>
+    <button class="btn-g">↩️ Reset to AI Plan</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+function show(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function showDetail(prod,line,day,units,materials,note,eff){
+  const colors={A:['var(--amber)','#f59e0b20'],B:['var(--blue)','#3b82f620'],C:['var(--green)','#10b98120'],IDLE:['var(--muted)','var(--bg3)']};
+  const names={A:'Product A',B:'Product B',C:'Product C',IDLE:'Maintenance'};
+  const c=colors[prod]||colors.IDLE;
+  document.getElementById('dp-title-text').innerHTML=`<span style="color:${c[0]}">${names[prod]}</span> · ${line} · ${day}`;
+  document.getElementById('dp-grid').innerHTML=`
+    <div class="dp-item"><div class="dp-label">Units</div><div class="dp-val" style="color:${c[0]}">${units||'—'}</div></div>
+    <div class="dp-item"><div class="dp-label">Efficiency</div><div class="dp-val" style="color:var(--green)">${eff}</div></div>
+    <div class="dp-item"><div class="dp-label">Status</div><div class="dp-val" style="font-size:12px;color:${note.includes('⚠️')?'var(--red)':'var(--green)'}">${note.includes('⚠️')?'⚠️ Risk':'✅ OK'}</div></div>
+  `;
+  document.getElementById('dp-ai').innerHTML=`
+    <div class="ai-tag">🧠 Materials · ${day}</div>
+    <p class="ai-text" style="font-size:12px">${materials}<br/><br/><strong style="color:${note.includes('⚠️')?'var(--red)':'var(--green)'}">Note:</strong> ${note}</p>
+  `;
+  document.getElementById('detail-panel').classList.add('visible');
+}
+
+function editSlot(el,slotName){
+  document.getElementById('edit-slot-name').textContent=slotName;
+  document.getElementById('edit-feedback').style.display='block';
+}
+</script>
+</body>
+</html>

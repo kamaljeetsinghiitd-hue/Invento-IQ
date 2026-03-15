@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StockSense AI</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+  .topbar { background: linear-gradient(135deg,#1e293b,#0f172a); border-bottom: 1px solid #1e3a5f; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .logo-icon { width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white; }
+  .logo-text { font-weight:700;font-size:18px;letter-spacing:-0.5px;margin-left:10px; }
+  .alert-badge { background:#ef444420;border:1px solid #ef444440;border-radius:20px;padding:4px 12px;font-size:12px;color:#ef4444;font-weight:600;display:flex;align-items:center;gap:6px; }
+  .dot { width:6px;height:6px;border-radius:50%;background:#ef4444;display:inline-block; }
+  .avatar { width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;margin-left:12px; }
+  .topbar-right { display:flex;align-items:center; }
+  nav { background:#1e293b;border-bottom:1px solid #1e3a5f;padding:0 20px;display:flex;gap:4px;overflow-x:auto; }
+  .nav-btn { background:none;border:none;cursor:pointer;padding:14px 14px;font-size:13px;font-weight:600;color:#64748b;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap; }
+  .nav-btn.active { color:#3b82f6;border-bottom:2px solid #3b82f6; }
+  .content { padding:20px; }
+  .screen { display:none; }
+  .screen.active { display:block; }
+  h1 { font-size:22px;font-weight:700;color:#f1f5f9; }
+  .subtitle { color:#64748b;margin:4px 0 0;font-size:14px; }
+  .cards { display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0; }
+  @media(min-width:600px){ .cards { grid-template-columns:repeat(4,1fr); } }
+  .card { background:#1e293b;border-radius:16px;padding:18px;border:1px solid; }
+  .card-icon { font-size:22px;margin-bottom:8px; }
+  .card-val { font-size:26px;font-weight:800; }
+  .card-label { font-size:12px;color:#64748b;margin-top:4px;font-weight:500; }
+  .section { background:#1e293b;border-radius:16px;padding:18px;margin-bottom:16px; }
+  .section-title { font-size:15px;font-weight:700;margin-bottom:14px; }
+  .alert-item { display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:12px;margin-bottom:8px;cursor:pointer;transition:opacity 0.2s; }
+  .alert-item:hover { opacity:0.85; }
+  .item-name { font-weight:600;font-size:14px;color:#f1f5f9; }
+  .item-sub { font-size:12px;color:#64748b;margin-top:2px; }
+  .days-left { font-size:13px;font-weight:700; }
+  .go { font-size:11px;color:#64748b; }
+  .ai-box { background:linear-gradient(135deg,#1e3a5f,#1e293b);border-radius:16px;padding:18px;border:1px solid #3b82f630; }
+  .ai-label { font-size:13px;color:#3b82f6;font-weight:700;margin-bottom:8px; }
+  .ai-text { font-size:14px;color:#94a3b8;line-height:1.6; }
+  .filters { display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap; }
+  .filter-btn { border:none;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;background:#1e293b;color:#64748b;border:1px solid #1e3a5f; }
+  .filter-btn.active { background:#3b82f6;color:white;border-color:#3b82f6; }
+  .table-wrap { background:#1e293b;border-radius:16px;overflow:hidden;border:1px solid #1e3a5f; }
+  .table-head { display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;border-bottom:1px solid #1e3a5f;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px; }
+  .table-row { display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:14px 16px;border-bottom:1px solid #1e3a5f20;cursor:pointer;font-size:13px;transition:background 0.15s; }
+  .table-row:hover { background:#263548; }
+  .badge { border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600; }
+  .reorder-card { background:#1e293b;border-radius:16px;padding:18px;margin-bottom:14px; }
+  .reorder-title { font-weight:700;font-size:15px;color:#f1f5f9; }
+  .reorder-supplier { color:#64748b;font-size:12px;margin-top:4px; }
+  .reorder-info { margin-top:12px;font-size:13px;color:#94a3b8; }
+  .btn-row { display:flex;gap:10px;margin-top:14px; }
+  .btn-wa { background:linear-gradient(135deg,#25D366,#128C7E);border:none;border-radius:10px;padding:11px 16px;color:white;font-weight:700;font-size:13px;cursor:pointer;flex:1; }
+  .btn-sec { background:#263548;border:1px solid #1e3a5f;border-radius:10px;padding:11px 16px;color:#94a3b8;font-weight:600;font-size:13px;cursor:pointer; }
+  .detail-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px; }
+  .detail-card { background:#0f172a;border-radius:12px;padding:16px;border:1px solid; }
+  .detail-label { font-size:11px;color:#64748b;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px; }
+  .detail-val { font-size:20px;font-weight:800; }
+  .back-btn { background:none;border:none;color:#3b82f6;cursor:pointer;font-size:13px;font-weight:600;margin-bottom:18px;padding:0; }
+  .detail-box { background:#1e293b;border-radius:16px;padding:22px; }
+  .detail-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px; }
+  .whatsapp-section { background:#1e293b;border-radius:14px;padding:18px;margin-top:20px;border:1px solid #1e3a5f; }
+  .alert-list-item { background:#1e293b;border-radius:14px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center; }
+  .alert-icon-box { width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-right:14px; }
+  .resolve-btn { background:#263548;border:1px solid #1e3a5f;border-radius:8px;padding:7px 14px;color:#94a3b8;font-size:12px;cursor:pointer;font-weight:600; }
+  .add-btn { background:linear-gradient(135deg,#3b82f6,#06b6d4);border:none;border-radius:10px;padding:10px 16px;color:white;font-weight:600;font-size:13px;cursor:pointer; }
+  strong.blue { color:#3b82f6; }
+  strong.white { color:#f1f5f9; }
+  strong.green { color:#22c55e; }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div style="display:flex;align-items:center">
+    <div class="logo-icon">S</div>
+    <span class="logo-text">Stock<span style="color:#3b82f6">Sense</span> <span style="color:#64748b;font-weight:400;font-size:13px">AI</span></span>
+  </div>
+  <div class="topbar-right">
+    <div class="alert-badge"><span class="dot"></span>3 Critical Alerts</div>
+    <div class="avatar">K</div>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav>
+  <button class="nav-btn active" onclick="showScreen('dashboard',this)">📊 Dashboard</button>
+  <button class="nav-btn" onclick="showScreen('inventory',this)">📦 Inventory</button>
+  <button class="nav-btn" onclick="showScreen('alerts',this)">🔔 Alerts (3)</button>
+  <button class="nav-btn" onclick="showScreen('reorder',this)">🔄 Reorder</button>
+</nav>
+
+<div class="content">
+
+<!-- DASHBOARD -->
+<div id="screen-dashboard" class="screen active">
+  <h1>Good Morning, Kamal 👋</h1>
+  <p class="subtitle">Sunday, March 15, 2026 · Here's your inventory health</p>
+  <div class="cards">
+    <div class="card" style="border-color:#3b82f630;box-shadow:0 0 20px #3b82f610">
+      <div class="card-icon">📦</div>
+      <div class="card-val" style="color:#3b82f6">245</div>
+      <div class="card-label">Total SKUs</div>
+    </div>
+    <div class="card" style="border-color:#ef444430;box-shadow:0 0 20px #ef444410">
+      <div class="card-icon">🔴</div>
+      <div class="card-val" style="color:#ef4444">3</div>
+      <div class="card-label">Critical</div>
+    </div>
+    <div class="card" style="border-color:#f59e0b30;box-shadow:0 0 20px #f59e0b10">
+      <div class="card-icon">🟡</div>
+      <div class="card-val" style="color:#f59e0b">8</div>
+      <div class="card-label">Low Stock</div>
+    </div>
+    <div class="card" style="border-color:#22c55e30;box-shadow:0 0 20px #22c55e10">
+      <div class="card-icon">🟢</div>
+      <div class="card-val" style="color:#22c55e">234</div>
+      <div class="card-label">Healthy</div>
+    </div>
+  </div>
+
+  <div class="section" style="border:1px solid #ef444430">
+    <div class="section-title" style="color:#ef4444">⚠️ Needs Immediate Attention</div>
+    <div class="alert-item" style="background:#ef444415;border:1px solid #ef444430" onclick="showDetail('steel')">
+      <div><div class="item-name">Steel Rods</div><div class="item-sub">450 kg remaining · Raw Material</div></div>
+      <div style="text-align:right"><div class="days-left" style="color:#ef4444">2 days left</div><div class="go">→ View Details</div></div>
+    </div>
+    <div class="alert-item" style="background:#f59e0b10;border:1px solid #f59e0b30" onclick="showDetail('copper')">
+      <div><div class="item-name">Copper Wire</div><div class="item-sub">320 m remaining · Electrical</div></div>
+      <div style="text-align:right"><div class="days-left" style="color:#f59e0b">5 days left</div><div class="go">→ View Details</div></div>
+    </div>
+    <div class="alert-item" style="background:#f59e0b10;border:1px solid #f59e0b30" onclick="showDetail('plastic')">
+      <div><div class="item-name">Plastic Grade A</div><div class="item-sub">780 kg remaining · Raw Material</div></div>
+      <div style="text-align:right"><div class="days-left" style="color:#f59e0b">6 days left</div><div class="go">→ View Details</div></div>
+    </div>
+  </div>
+
+  <div class="ai-box">
+    <div class="ai-label">🧠 AI Insight</div>
+    <p class="ai-text">Based on your last 30 days consumption pattern, <strong class="white">Steel Rods</strong> usage has increased by 23%. Consider increasing your reorder quantity to <strong class="blue">2,500 kg</strong> to avoid future stockouts.</p>
+  </div>
+</div>
+
+<!-- INVENTORY -->
+<div id="screen-inventory" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <h1>Inventory</h1>
+    <button class="add-btn">+ Add Item</button>
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterTable('all',this)">All</button>
+    <button class="filter-btn" onclick="filterTable('critical',this)">Critical</button>
+    <button class="filter-btn" onclick="filterTable('low',this)">Low</button>
+    <button class="filter-btn" onclick="filterTable('healthy',this)">Healthy</button>
+  </div>
+  <div class="table-wrap">
+    <div class="table-head"><span>Item</span><span>Stock</span><span>Days Left</span><span>Status</span></div>
+    <div class="table-row" data-status="critical" onclick="showDetail('steel')">
+      <div><div class="item-name">Steel Rods</div><div class="item-sub">Raw Material</div></div>
+      <div style="align-self:center;color:#94a3b8">450 kg</div>
+      <div style="align-self:center;color:#ef4444;font-weight:700">2d</div>
+      <div style="align-self:center"><span class="badge" style="background:#fef2f2;color:#ef4444">🔴 Critical</span></div>
+    </div>
+    <div class="table-row" data-status="low" onclick="showDetail('copper')">
+      <div><div class="item-name">Copper Wire</div><div class="item-sub">Electrical</div></div>
+      <div style="align-self:center;color:#94a3b8">320 m</div>
+      <div style="align-self:center;color:#f59e0b;font-weight:700">5d</div>
+      <div style="align-self:center"><span class="badge" style="background:#fffbeb;color:#f59e0b">🟡 Low</span></div>
+    </div>
+    <div class="table-row" data-status="low" onclick="showDetail('plastic')">
+      <div><div class="item-name">Plastic Grade A</div><div class="item-sub">Raw Material</div></div>
+      <div style="align-self:center;color:#94a3b8">780 kg</div>
+      <div style="align-self:center;color:#f59e0b;font-weight:700">6d</div>
+      <div style="align-self:center"><span class="badge" style="background:#fffbeb;color:#f59e0b">🟡 Low</span></div>
+    </div>
+    <div class="table-row" data-status="healthy">
+      <div><div class="item-name">Aluminium Sheet</div><div class="item-sub">Raw Material</div></div>
+      <div style="align-self:center;color:#94a3b8">2400 kg</div>
+      <div style="align-self:center;color:#22c55e;font-weight:700">30d</div>
+      <div style="align-self:center"><span class="badge" style="background:#f0fdf4;color:#22c55e">🟢 Healthy</span></div>
+    </div>
+    <div class="table-row" data-status="healthy">
+      <div><div class="item-name">Bearing 6205</div><div class="item-sub">Mechanical</div></div>
+      <div style="align-self:center;color:#94a3b8">150 pcs</div>
+      <div style="align-self:center;color:#22c55e;font-weight:700">30d</div>
+      <div style="align-self:center"><span class="badge" style="background:#f0fdf4;color:#22c55e">🟢 Healthy</span></div>
+    </div>
+    <div class="table-row" data-status="healthy">
+      <div><div class="item-name">Hydraulic Oil</div><div class="item-sub">Consumable</div></div>
+      <div style="align-self:center;color:#94a3b8">200 L</div>
+      <div style="align-self:center;color:#22c55e;font-weight:700">25d</div>
+      <div style="align-self:center"><span class="badge" style="background:#f0fdf4;color:#22c55e">🟢 Healthy</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTS -->
+<div id="screen-alerts" class="screen">
+  <h1 style="margin-bottom:18px">🔔 Alerts</h1>
+  <div class="alert-list-item" style="border:1px solid #ef444430">
+    <div style="display:flex;align-items:center">
+      <div class="alert-icon-box" style="background:#ef444420">🚨</div>
+      <div><div class="item-name">Steel Rods will run out in 2 days!</div><div class="item-sub">Just now</div></div>
+    </div>
+    <button class="resolve-btn">Resolve</button>
+  </div>
+  <div class="alert-list-item" style="border:1px solid #f59e0b30">
+    <div style="display:flex;align-items:center">
+      <div class="alert-icon-box" style="background:#f59e0b20">⚠️</div>
+      <div><div class="item-name">Copper Wire below threshold</div><div class="item-sub">2 hrs ago</div></div>
+    </div>
+    <button class="resolve-btn">Resolve</button>
+  </div>
+  <div class="alert-list-item" style="border:1px solid #f59e0b30">
+    <div style="display:flex;align-items:center">
+      <div class="alert-icon-box" style="background:#f59e0b20">⚠️</div>
+      <div><div class="item-name">Plastic Grade A needs reorder</div><div class="item-sub">5 hrs ago</div></div>
+    </div>
+    <button class="resolve-btn">Resolve</button>
+  </div>
+  <div class="whatsapp-section">
+    <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#f1f5f9">📱 WhatsApp Alerts Active</div>
+    <div style="font-size:13px;color:#64748b;line-height:1.7">Alerts are being sent to <strong style="color:#22c55e">+91 98765 43210</strong><br/>You'll get notified when any item goes below threshold.</div>
+  </div>
+</div>
+
+<!-- REORDER -->
+<div id="screen-reorder" class="screen">
+  <h1>🔄 Reorder Suggestions</h1>
+  <p style="color:#64748b;font-size:13px;margin:6px 0 20px">AI recommended reorder quantities based on usage patterns</p>
+  <div class="reorder-card" style="border:1px solid #ef444430">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="reorder-title">Steel Rods</div>
+        <div class="reorder-supplier">Supplier: Rathi Steel</div>
+        <div class="reorder-info">Current stock: <strong class="white">450 kg</strong> · Suggested order: <strong class="blue">2000 kg</strong></div>
+      </div>
+      <span class="badge" style="background:#fef2f2;color:#ef4444;white-space:nowrap">2d left</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn-wa">📱 Send WhatsApp Order</button>
+      <button class="btn-sec">✏️ Edit Qty</button>
+    </div>
+  </div>
+  <div class="reorder-card" style="border:1px solid #f59e0b30">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="reorder-title">Copper Wire</div>
+        <div class="reorder-supplier">Supplier: Vinayak Electricals</div>
+        <div class="reorder-info">Current stock: <strong class="white">320 m</strong> · Suggested order: <strong class="blue">1000 m</strong></div>
+      </div>
+      <span class="badge" style="background:#fffbeb;color:#f59e0b;white-space:nowrap">5d left</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn-wa">📱 Send WhatsApp Order</button>
+      <button class="btn-sec">✏️ Edit Qty</button>
+    </div>
+  </div>
+  <div class="reorder-card" style="border:1px solid #f59e0b30">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="reorder-title">Plastic Grade A</div>
+        <div class="reorder-supplier">Supplier: Mehta Polymers</div>
+        <div class="reorder-info">Current stock: <strong class="white">780 kg</strong> · Suggested order: <strong class="blue">1500 kg</strong></div>
+      </div>
+      <span class="badge" style="background:#fffbeb;color:#f59e0b;white-space:nowrap">6d left</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn-wa">📱 Send WhatsApp Order</button>
+      <button class="btn-sec">✏️ Edit Qty</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div id="screen-detail" class="screen">
+  <button class="back-btn" onclick="showScreen('inventory', document.querySelectorAll('.nav-btn')[1])">← Back to Inventory</button>
+  <div class="detail-box" id="detail-content"></div>
+</div>
+
+</div>
+
+<script>
+const details = {
+  steel: {
+    name: "Steel Rods", category: "Raw Material", supplier: "Rathi Steel",
+    stock: "450 kg", daily: "200 kg/day", days: "2 days", daysNum: 2,
+    reorder: "2000 kg", status: "critical", color: "#ef4444", bg: "#fef2f2", label: "🔴 Critical",
+    recDays: 10
+  },
+  copper: {
+    name: "Copper Wire", category: "Electrical", supplier: "Vinayak Electricals",
+    stock: "320 m", daily: "60 m/day", days: "5 days", daysNum: 5,
+    reorder: "1000 m", status: "low", color: "#f59e0b", bg: "#fffbeb", label: "🟡 Low",
+    recDays: 16
+  },
+  plastic: {
+    name: "Plastic Grade A", category: "Raw Material", supplier: "Mehta Polymers",
+    stock: "780 kg", daily: "120 kg/day", days: "6 days", daysNum: 6,
+    reorder: "1500 kg", status: "low", color: "#f59e0b", bg: "#fffbeb", label: "🟡 Low",
+    recDays: 12
+  }
+};
+
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function showDetail(key) {
+  const d = details[key];
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-header">
+      <div>
+        <h2 style="font-size:22px;font-weight:800;color:#f1f5f9">${d.name}</h2>
+        <div style="color:#64748b;font-size:13px;margin-top:4px">${d.category} · ${d.supplier}</div>
+      </div>
+      <span class="badge" style="background:${d.bg};color:${d.color};font-size:13px;padding:6px 16px">${d.label}</span>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-card" style="border-color:#3b82f620">
+        <div class="detail-label">Current Stock</div>
+        <div class="detail-val" style="color:#3b82f6">${d.stock}</div>
+      </div>
+      <div class="detail-card" style="border-color:#8b5cf620">
+        <div class="detail-label">Daily Usage</div>
+        <div class="detail-val" style="color:#8b5cf6">${d.daily}</div>
+      </div>
+      <div class="detail-card" style="border-color:${d.color}20">
+        <div class="detail-label">Days Remaining</div>
+        <div class="detail-val" style="color:${d.color}">${d.days}</div>
+      </div>
+    </div>
+    <div style="background:#0f172a;border-radius:12px;padding:18px;margin-bottom:18px;border:1px solid #3b82f620">
+      <div style="font-size:13px;color:#3b82f6;font-weight:700;margin-bottom:8px">🧠 AI Recommendation</div>
+      <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6">
+        Order <strong style="color:#f1f5f9">${d.reorder}</strong> from ${d.supplier} immediately.
+        Based on current usage rate, this will last approximately <strong style="color:#22c55e">${d.recDays} days.</strong>
+      </p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-wa">📱 Send WhatsApp Order to ${d.supplier}</button>
+      <button class="btn-sec">📋 Generate PO</button>
+    </div>
+  `;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-detail').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+}
+
+function filterTable(status, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.table-row').forEach(row => {
+    row.style.display = (status === 'all' || row.dataset.status === status) ? 'grid' : 'none';
+  });
+}
+</script>
+</body>
+</html>

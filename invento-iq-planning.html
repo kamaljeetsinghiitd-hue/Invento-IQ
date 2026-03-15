@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Invento-IQ | AI Planning Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --bg3: #1a2235;
+  --border: #1f2d45;
+  --amber: #f59e0b;
+  --amber2: #fbbf24;
+  --blue: #3b82f6;
+  --green: #10b981;
+  --red: #ef4444;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --soft: #94a3b8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* TOPBAR */
+.topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--amber), #d97706);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: #000;
+}
+.brand-name { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
+.brand-name span { color: var(--amber); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.week-badge {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 5px 12px;
+  font-size: 12px; color: var(--soft); font-family: 'JetBrains Mono', monospace;
+}
+.ai-badge {
+  background: #f59e0b20; border: 1px solid #f59e0b40;
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 11px; color: var(--amber); font-weight: 700;
+  display: flex; align-items: center; gap: 5px;
+}
+.pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* NAV */
+nav {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; gap: 2px;
+  overflow-x: auto;
+}
+.nav-btn {
+  background: none; border: none; cursor: pointer;
+  padding: 13px 14px; font-size: 12px; font-weight: 700;
+  color: var(--muted); border-bottom: 2px solid transparent;
+  transition: all 0.2s; white-space: nowrap;
+  font-family: 'Syne', sans-serif; letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.nav-btn.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+.content { padding: 24px; max-width: 1100px; margin: 0 auto; }
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* TYPOGRAPHY */
+.page-title { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.page-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+/* CARDS */
+.cards-4 { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin: 20px 0; }
+@media(min-width:600px){ .cards-4 { grid-template-columns: repeat(4,1fr); } }
+.stat-card {
+  background: var(--bg2); border-radius: 14px; padding: 18px;
+  border: 1px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.stat-card.amber::before { background: linear-gradient(90deg, var(--amber), transparent); }
+.stat-card.blue::before { background: linear-gradient(90deg, var(--blue), transparent); }
+.stat-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
+.stat-card.red::before { background: linear-gradient(90deg, var(--red), transparent); }
+.stat-icon { font-size: 20px; margin-bottom: 10px; }
+.stat-val { font-size: 26px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* SECTION BOX */
+.box {
+  background: var(--bg2); border-radius: 14px;
+  border: 1px solid var(--border); margin-bottom: 16px;
+  overflow: hidden;
+}
+.box-header {
+  padding: 16px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.box-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--soft); }
+.box-body { padding: 18px; }
+
+/* FORECAST BARS */
+.forecast-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.forecast-label { width: 70px; font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.bar-track { flex: 1; height: 28px; background: var(--bg3); border-radius: 6px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding: 0 10px; font-size: 12px; font-weight: 700; color: #000; font-family: 'JetBrains Mono', monospace; transition: width 0.6s ease; }
+.forecast-units { width: 80px; font-size: 12px; color: var(--soft); text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+/* DAY PLAN TABLE */
+.plan-table { width: 100%; border-collapse: collapse; }
+.plan-table th { padding: 10px 14px; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; text-align: left; border-bottom: 1px solid var(--border); }
+.plan-table td { padding: 13px 14px; font-size: 13px; border-bottom: 1px solid #1a2235; }
+.plan-table tr:last-child td { border-bottom: none; }
+.plan-table tr:hover td { background: #141e2e; }
+.day-chip { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+.units-chip { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--amber); }
+.line-split { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.warn-chip { background: #ef444415; border: 1px solid #ef444430; border-radius: 6px; padding: 2px 8px; font-size: 11px; color: var(--red); font-weight: 600; }
+.ok-chip { background: #10b98115; border: 1px solid #10b98130; border-radius: 6px; padding: 2px 8px; font-size: 11px; color: var(--green); font-weight: 600; }
+
+/* PURCHASE ORDERS */
+.po-card {
+  background: var(--bg3); border-radius: 12px; padding: 16px;
+  margin-bottom: 12px; border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+}
+.po-left { display: flex; align-items: center; gap: 14px; }
+.po-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.po-name { font-weight: 700; font-size: 14px; }
+.po-supplier { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.po-qty { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--amber); font-weight: 600; }
+.po-date { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.btn-wa { background: linear-gradient(135deg,#25D366,#128C7E); border: none; border-radius: 8px; padding: 9px 14px; color: white; font-weight: 700; font-size: 12px; cursor: pointer; white-space: nowrap; font-family: 'Syne', sans-serif; }
+.btn-edit { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 14px; color: var(--soft); font-weight: 600; font-size: 12px; cursor: pointer; font-family: 'Syne', sans-serif; }
+
+/* BOM */
+.bom-product { background: var(--bg3); border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--border); }
+.bom-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; cursor: pointer; }
+.bom-name { font-weight: 700; font-size: 15px; }
+.bom-code { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 3px; }
+.bom-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--bg2); border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border); }
+.bom-mat { font-size: 13px; font-weight: 600; }
+.bom-unit { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.bom-qty { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--amber); font-weight: 700; }
+
+/* CAPACITY */
+.capacity-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.cap-label { width: 100px; font-size: 12px; color: var(--muted); }
+.cap-track { flex: 1; height: 20px; background: var(--bg3); border-radius: 20px; overflow: hidden; }
+.cap-fill { height: 100%; border-radius: 20px; }
+.cap-pct { width: 40px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--soft); text-align: right; }
+
+/* AI INSIGHT */
+.ai-box {
+  background: linear-gradient(135deg, #1a2a1a, var(--bg2));
+  border: 1px solid #10b98130; border-radius: 14px; padding: 18px; margin-bottom: 16px;
+}
+.ai-box-amber {
+  background: linear-gradient(135deg, #1a1a0a, var(--bg2));
+  border: 1px solid #f59e0b30; border-radius: 14px; padding: 18px; margin-bottom: 16px;
+}
+.ai-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.ai-content { font-size: 14px; color: var(--soft); line-height: 1.7; }
+
+/* GRID 2 */
+.grid2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media(min-width:700px){ .grid2 { grid-template-columns: 1fr 1fr; } }
+
+/* BUTTONS */
+.btn-primary { background: linear-gradient(135deg, var(--amber), #d97706); border: none; border-radius: 10px; padding: 11px 20px; color: #000; font-weight: 800; font-size: 13px; cursor: pointer; font-family: 'Syne', sans-serif; }
+.btn-ghost { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 11px 20px; color: var(--soft); font-weight: 600; font-size: 13px; cursor: pointer; font-family: 'Syne', sans-serif; }
+
+/* SCENARIO */
+.scenario-card { background: var(--bg3); border-radius: 12px; padding: 16px; border: 1px solid var(--border); cursor: pointer; transition: border-color 0.2s; }
+.scenario-card:hover { border-color: var(--amber); }
+.scenario-card.selected { border-color: var(--amber); background: #f59e0b08; }
+.scenario-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.scenario-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.scenario-result { margin-top: 10px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+
+/* FLOW DIAGRAM */
+.flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 20px 0; }
+.flow-node {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; text-align: center; flex: 1; min-width: 120px;
+}
+.flow-node.active-node { border-color: var(--amber); background: #f59e0b08; }
+.flow-icon { font-size: 22px; margin-bottom: 6px; }
+.flow-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--soft); }
+.flow-arrow { color: var(--amber); font-size: 18px; font-weight: 700; flex-shrink: 0; }
+
+/* TAG */
+.tag { display: inline-block; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">I</div>
+    <span class="brand-name">Invento<span>-IQ</span></span>
+  </div>
+  <div class="topbar-right">
+    <div class="week-badge">W11 · Mar 15–21, 2026</div>
+    <div class="ai-badge"><span class="pulse"></span> AI Active</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <button class="nav-btn active" onclick="show('overview',this)">🏭 Overview</button>
+  <button class="nav-btn" onclick="show('forecast',this)">📈 Sales Forecast</button>
+  <button class="nav-btn" onclick="show('capacity',this)">⚙️ Capacity</button>
+  <button class="nav-btn" onclick="show('plan',this)">📅 Day Plan</button>
+  <button class="nav-btn" onclick="show('purchase',this)">🛒 Purchase</button>
+  <button class="nav-btn" onclick="show('bom',this)">🧩 BOM</button>
+  <button class="nav-btn" onclick="show('whatif',this)">🔮 What-If</button>
+</nav>
+
+<div class="content">
+
+<!-- OVERVIEW -->
+<div id="screen-overview" class="screen active">
+  <div class="page-title">Factory Intelligence Dashboard</div>
+  <p class="page-sub">AI has generated your weekly plan · Last updated 5 mins ago</p>
+
+  <!-- Flow -->
+  <div class="flow">
+    <div class="flow-node active-node">
+      <div class="flow-icon">📊</div>
+      <div class="flow-label">Sales Data</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node active-node">
+      <div class="flow-icon">🧠</div>
+      <div class="flow-label">AI Engine</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node active-node">
+      <div class="flow-icon">🏭</div>
+      <div class="flow-label">Factory Plan</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node active-node">
+      <div class="flow-icon">🛒</div>
+      <div class="flow-label">Purchase Orders</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node active-node">
+      <div class="flow-icon">📅</div>
+      <div class="flow-label">Day-wise Schedule</div>
+    </div>
+  </div>
+
+  <div class="cards-4">
+    <div class="stat-card amber">
+      <div class="stat-icon">📦</div>
+      <div class="stat-val" style="color:var(--amber)">2,340</div>
+      <div class="stat-label">Units This Week</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-icon">⚙️</div>
+      <div class="stat-val" style="color:var(--blue)">78%</div>
+      <div class="stat-label">Capacity Used</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-val" style="color:var(--red)">3</div>
+      <div class="stat-label">Material Gaps</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon">🛒</div>
+      <div class="stat-val" style="color:var(--green)">5</div>
+      <div class="stat-label">Auto POs Generated</div>
+    </div>
+  </div>
+
+  <div class="ai-box-amber">
+    <div class="ai-tag" style="color:var(--amber)">🧠 AI Weekly Summary</div>
+    <p class="ai-content">
+      Based on sales forecast and current inventory, AI has planned <strong style="color:var(--text)">2,340 units</strong> for this week across 2 production lines.
+      <strong style="color:var(--red)"> 3 material shortages</strong> detected — Steel Rods, Copper Wire, and Plastic Grade A.
+      <strong style="color:var(--green)"> 5 purchase orders</strong> auto-generated and ready to send via WhatsApp.
+      Estimated on-time delivery: <strong style="color:var(--green)">94%</strong>.
+    </p>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <div class="box-header"><span class="box-title">This Week's Plan</span></div>
+      <div class="box-body">
+        <table class="plan-table" style="width:100%">
+          <tr><th>Day</th><th>Units</th><th>Status</th></tr>
+          <tr><td><span class="day-chip">Mon</span></td><td><span class="units-chip">380</span></td><td><span class="ok-chip">✅ Ready</span></td></tr>
+          <tr><td><span class="day-chip">Tue</span></td><td><span class="units-chip">420</span></td><td><span class="ok-chip">✅ Ready</span></td></tr>
+          <tr><td><span class="day-chip">Wed</span></td><td><span class="units-chip">360</span></td><td><span class="warn-chip">⚠️ Steel Low</span></td></tr>
+          <tr><td><span class="day-chip">Thu</span></td><td><span class="units-chip">400</span></td><td><span class="ok-chip">✅ Ready</span></td></tr>
+          <tr><td><span class="day-chip">Fri</span></td><td><span class="units-chip">420</span></td><td><span class="ok-chip">✅ Ready</span></td></tr>
+          <tr><td><span class="day-chip">Sat</span></td><td><span class="units-chip">360</span></td><td><span class="ok-chip">✅ Ready</span></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="box">
+      <div class="box-header"><span class="box-title">Urgent Actions</span></div>
+      <div class="box-body">
+        <div style="background:#ef444412;border:1px solid #ef444430;border-radius:10px;padding:14px;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:700;color:var(--red)">🚨 Steel Rods — 2 days left</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Order 2000kg from Rathi Steel today</div>
+          <button class="btn-wa" style="margin-top:10px;width:100%">📱 Send WhatsApp Order</button>
+        </div>
+        <div style="background:#f59e0b10;border:1px solid #f59e0b30;border-radius:10px;padding:14px;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:700;color:var(--amber)">⚠️ Copper Wire — 5 days left</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Order 1000m from Vinayak Electricals</div>
+          <button class="btn-wa" style="margin-top:10px;width:100%">📱 Send WhatsApp Order</button>
+        </div>
+        <div style="background:#f59e0b10;border:1px solid #f59e0b30;border-radius:10px;padding:14px">
+          <div style="font-size:13px;font-weight:700;color:var(--amber)">⚠️ Plastic Grade A — 6 days left</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Order 1500kg from Mehta Polymers</div>
+          <button class="btn-wa" style="margin-top:10px;width:100%">📱 Send WhatsApp Order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SALES FORECAST -->
+<div id="screen-forecast" class="screen">
+  <div class="page-title">📈 Sales Forecast</div>
+  <p class="page-sub">AI prediction based on past 6 months + seasonal patterns</p>
+
+  <div class="cards-4" style="margin-top:20px">
+    <div class="stat-card amber"><div class="stat-icon">📅</div><div class="stat-val" style="color:var(--amber)">2,340</div><div class="stat-label">This Week</div></div>
+    <div class="stat-card blue"><div class="stat-icon">📅</div><div class="stat-val" style="color:var(--blue)">2,580</div><div class="stat-label">Next Week</div></div>
+    <div class="stat-card green"><div class="stat-icon">📆</div><div class="stat-val" style="color:var(--green)">9,840</div><div class="stat-label">This Month</div></div>
+    <div class="stat-card red"><div class="stat-icon">📈</div><div class="stat-val" style="color:var(--red)">+18%</div><div class="stat-label">vs Last Month</div></div>
+  </div>
+
+  <div class="box">
+    <div class="box-header"><span class="box-title">4-Week Demand Forecast</span><span style="font-size:11px;color:var(--amber)">AI Predicted</span></div>
+    <div class="box-body">
+      <div class="forecast-row">
+        <span class="forecast-label mono">Week 11</span>
+        <div class="bar-track"><div class="bar-fill" style="width:65%;background:linear-gradient(90deg,var(--amber),#fbbf24)">2,340</div></div>
+        <span class="forecast-units">2,340 units</span>
+      </div>
+      <div class="forecast-row">
+        <span class="forecast-label mono">Week 12</span>
+        <div class="bar-track"><div class="bar-fill" style="width:72%;background:linear-gradient(90deg,var(--blue),#60a5fa)">2,580</div></div>
+        <span class="forecast-units">2,580 units</span>
+      </div>
+      <div class="forecast-row">
+        <span class="forecast-label mono">Week 13</span>
+        <div class="bar-track"><div class="bar-fill" style="width:80%;background:linear-gradient(90deg,var(--green),#34d399)">2,880</div></div>
+        <span class="forecast-units">2,880 units</span>
+      </div>
+      <div class="forecast-row">
+        <span class="forecast-label mono">Week 14</span>
+        <div class="bar-track"><div class="bar-fill" style="width:90%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)">3,240</div></div>
+        <span class="forecast-units">3,240 units</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <div class="box-header"><span class="box-title">Product Mix This Week</span></div>
+      <div class="box-body">
+        <div class="forecast-row"><span class="forecast-label" style="width:90px;font-size:12px">Product A</span><div class="bar-track"><div class="bar-fill" style="width:55%;background:var(--amber)">1,200</div></div></div>
+        <div class="forecast-row"><span class="forecast-label" style="width:90px;font-size:12px">Product B</span><div class="bar-track"><div class="bar-fill" style="width:35%;background:var(--blue)">780</div></div></div>
+        <div class="forecast-row"><span class="forecast-label" style="width:90px;font-size:12px">Product C</span><div class="bar-track"><div class="bar-fill" style="width:16%;background:var(--green)">360</div></div></div>
+      </div>
+    </div>
+    <div class="ai-box-amber" style="margin-bottom:0">
+      <div class="ai-tag" style="color:var(--amber)">🧠 AI Seasonal Insight</div>
+      <p class="ai-content" style="font-size:13px">
+        March–April historically shows <strong style="color:var(--text)">+22% demand surge</strong> based on past 3 years data. Week 14 forecast is high — recommend building safety stock from Week 12 onwards. Consider adding a <strong style="color:var(--amber)">Sunday shift</strong> in Week 13.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- CAPACITY -->
+<div id="screen-capacity" class="screen">
+  <div class="page-title">⚙️ Factory Capacity</div>
+  <p class="page-sub">Machine availability, shifts and production constraints</p>
+
+  <div class="cards-4" style="margin-top:20px">
+    <div class="stat-card amber"><div class="stat-icon">🏭</div><div class="stat-val" style="color:var(--amber)">2</div><div class="stat-label">Active Lines</div></div>
+    <div class="stat-card blue"><div class="stat-icon">⏱️</div><div class="stat-val" style="color:var(--blue)">2</div><div class="stat-label">Shifts/Day</div></div>
+    <div class="stat-card green"><div class="stat-icon">📦</div><div class="stat-val" style="color:var(--green)">420</div><div class="stat-label">Max Units/Day</div></div>
+    <div class="stat-card red"><div class="stat-icon">🔧</div><div class="stat-val" style="color:var(--red)">1</div><div class="stat-label">Maintenance Days</div></div>
+  </div>
+
+  <div class="box">
+    <div class="box-header"><span class="box-title">Weekly Capacity Utilization</span></div>
+    <div class="box-body">
+      <div class="capacity-row"><span class="cap-label">Monday</span><div class="cap-track"><div class="cap-fill" style="width:90%;background:linear-gradient(90deg,var(--green),#34d399)"></div></div><span class="cap-pct">90%</span></div>
+      <div class="capacity-row"><span class="cap-label">Tuesday</span><div class="cap-track"><div class="cap-fill" style="width:100%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></div></div><span class="cap-pct">100%</span></div>
+      <div class="capacity-row"><span class="cap-label">Wednesday</span><div class="cap-track"><div class="cap-fill" style="width:85%;background:linear-gradient(90deg,var(--green),#34d399)"></div></div><span class="cap-pct">85%</span></div>
+      <div class="capacity-row"><span class="cap-label">Thursday</span><div class="cap-track"><div class="cap-fill" style="width:95%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></div></div><span class="cap-pct">95%</span></div>
+      <div class="capacity-row"><span class="cap-label">Friday</span><div class="cap-track"><div class="cap-fill" style="width:100%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></div></div><span class="cap-pct">100%</span></div>
+      <div class="capacity-row"><span class="cap-label">Saturday</span><div class="cap-track"><div class="cap-fill" style="width:85%;background:linear-gradient(90deg,var(--green),#34d399)"></div></div><span class="cap-pct">85%</span></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <div class="box-header"><span class="box-title">Line A — Status</span><span class="ok-chip">Running</span></div>
+      <div class="box-body">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Capacity</span><span class="mono" style="color:var(--amber)">240 units/day</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Product</span><span>Product A, B</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Shifts</span><span>6am–2pm · 2pm–10pm</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Efficiency</span><span style="color:var(--green)">94%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <div class="box-header"><span class="box-title">Line B — Status</span><span class="ok-chip">Running</span></div>
+      <div class="box-body">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Capacity</span><span class="mono" style="color:var(--amber)">180 units/day</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Product</span><span>Product B, C</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Shifts</span><span>6am–2pm · 2pm–10pm</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Efficiency</span><span style="color:var(--green)">88%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY PLAN -->
+<div id="screen-plan" class="screen">
+  <div class="page-title">📅 AI Day-wise Production Plan</div>
+  <p class="page-sub">Auto-generated plan for Week 11 · Mar 15–21, 2026</p>
+
+  <div class="ai-box-amber" style="margin-top:20px">
+    <div class="ai-tag" style="color:var(--amber)">🧠 AI Planning Logic</div>
+    <p class="ai-content" style="font-size:13px">Plan generated based on: Sales forecast (2,340 units) → Available capacity (2,520 max) → Current inventory → BOM requirements → Supplier lead times. Wednesday production reduced by 60 units due to Steel Rods shortage.</p>
+  </div>
+
+  <div class="box">
+    <div class="box-header">
+      <span class="box-title">Daily Production Schedule</span>
+      <button class="btn-primary" style="padding:7px 14px;font-size:11px">⬇️ Export Plan</button>
+    </div>
+    <div class="box-body" style="padding:0">
+      <table class="plan-table" style="width:100%">
+        <tr><th>Day</th><th>Line A</th><th>Line B</th><th>Total</th><th>Material</th><th>Status</th></tr>
+        <tr>
+          <td><span class="day-chip">Mon 15</span></td>
+          <td><span style="color:var(--soft);font-size:13px">220 units<div class="line-split">Product A</div></span></td>
+          <td><span style="color:var(--soft);font-size:13px">160 units<div class="line-split">Product B</div></span></td>
+          <td><span class="units-chip">380</span></td>
+          <td><span style="font-size:12px;color:var(--muted)">Steel: 760kg<br/>Plastic: 456kg</span></td>
+          <td><span class="ok-chip">✅ Ready</span></td>
+        </tr>
+        <tr>
+          <td><span class="day-chip">Tue 16</span></td>
+          <td><span style="color:var(--soft);font-size:13px">240 units<div class="line-split">Product A</div></span></td>
+          <td><span style="color:var(--soft);font-size:13px">180 units<div class="line-split">Product C</div></span></td>
+          <td><span class="units-chip">420</span></td>
+          <td><span style="font-size:12px;color:var(--muted)">Steel: 840kg<br/>Copper: 210m</span></td>
+          <td><span class="ok-chip">✅ Ready</span></td>
+        </tr>
+        <tr>
+          <td><span class="day-chip">Wed 17</span></td>
+          <td><span style="color:var(--soft);font-size:13px">200 units<div class="line-split">Product B</div></span></td>
+          <td><span style="color:var(--soft);font-size:13px">160 units<div class="line-split">Product C</div></span></td>
+          <td><span class="units-chip" style="color:var(--red)">360</span></td>
+          <td><span style="font-size:12px;color:var(--red)">⚠️ Steel critical<br/>Order today!</span></td>
+          <td><span class="warn-chip">⚠️ Risk</span></td>
+        </tr>
+        <tr>
+          <td><span class="day-chip">Thu 18</span></td>
+          <td><span style="color:var(--soft);font-size:13px">220 units<div class="line-split">Product A</div></span></td>
+          <td><span style="color:var(--soft);font-size:13px">180 units<div class="line-split">Product B</div></span></td>
+          <td><span class="units-chip">400</span></td>
+          <td><span style="font-size:12px;color:var(--green)">✅ All available</span></td>
+          <td><span class="ok-chip">✅ Ready</span></td>
+        </tr>
+        <tr>
+          <td><span class="day-chip">Fri 19</span></td>
+          <td><span style="color:var(--soft);font-size:13px">240 units<div class="line-split">Product A</div></span></td>
+          <td><span style="color:var(--soft);font-size:13px">180 units<div class="line-split">Product C</div></span></td>
+          <td><span class="units-chip">420</span></td>
+          <td><span style="font-size:12px;color:var(--green)">✅ All available</span></td>
+          <td><span class="ok-chip">✅ Ready</span></td>
+        </tr>
+        <tr>
+          <td><span class="day-chip">Sat 20</span></td>
+          <td><span style="color:var(--soft);font-size:13px">200 units<div class="line-split">Product B</div></span></td>
+          <td><span style="color:var(--soft);font-size:13px">160 units<div class="line-split">Product A</div></span></td>
+          <td><span class="units-chip">360</span></td>
+          <td><span style="font-size:12px;color:var(--green)">✅ All available</span></td>
+          <td><span class="ok-chip">✅ Ready</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div><div class="mono" style="font-size:22px;font-weight:700;color:var(--amber)">2,340</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Total Units</div></div>
+      <div><div class="mono" style="font-size:22px;font-weight:700;color:var(--green)">94%</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">On-time Rate</div></div>
+      <div><div class="mono" style="font-size:22px;font-weight:700;color:var(--blue)">78%</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Capacity Used</div></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-primary">✅ Approve Plan</button>
+      <button class="btn-ghost">🔄 Regenerate</button>
+    </div>
+  </div>
+</div>
+
+<!-- PURCHASE -->
+<div id="screen-purchase" class="screen">
+  <div class="page-title">🛒 Auto Purchase Orders</div>
+  <p class="page-sub">AI generated based on production plan + current inventory</p>
+
+  <div class="ai-box" style="margin-top:20px">
+    <div class="ai-tag" style="color:var(--green)">🧠 AI Purchase Logic</div>
+    <p class="ai-content" style="font-size:13px">5 purchase orders auto-generated. Quantities calculated from BOM requirements × planned production − current inventory + safety stock buffer. Sorted by urgency.</p>
+  </div>
+
+  <div class="po-card" style="border-color:#ef444440">
+    <div class="po-left">
+      <div class="po-icon" style="background:#ef444420">🔩</div>
+      <div>
+        <div class="po-name">Steel Rods</div>
+        <div class="po-supplier">Rathi Steel Pvt. Ltd.</div>
+        <div class="po-qty">2,000 kg</div>
+        <div class="po-date">🚨 Order TODAY — only 2 days stock left</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-wa">📱 WhatsApp</button>
+      <button class="btn-edit">✏️ Edit</button>
+    </div>
+  </div>
+
+  <div class="po-card" style="border-color:#f59e0b40">
+    <div class="po-left">
+      <div class="po-icon" style="background:#f59e0b20">⚡</div>
+      <div>
+        <div class="po-name">Copper Wire</div>
+        <div class="po-supplier">Vinayak Electricals</div>
+        <div class="po-qty">1,000 m</div>
+        <div class="po-date">⚠️ Order by Wednesday — 5 days stock left</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-wa">📱 WhatsApp</button>
+      <button class="btn-edit">✏️ Edit</button>
+    </div>
+  </div>
+
+  <div class="po-card" style="border-color:#f59e0b40">
+    <div class="po-left">
+      <div class="po-icon" style="background:#f59e0b20">🧪</div>
+      <div>
+        <div class="po-name">Plastic Grade A</div>
+        <div class="po-supplier">Mehta Polymers</div>
+        <div class="po-qty">1,500 kg</div>
+        <div class="po-date">⚠️ Order by Thursday — 6 days stock left</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-wa">📱 WhatsApp</button>
+      <button class="btn-edit">✏️ Edit</button>
+    </div>
+  </div>
+
+  <div class="po-card">
+    <div class="po-left">
+      <div class="po-icon" style="background:#3b82f620">⚙️</div>
+      <div>
+        <div class="po-name">Bearing 6205</div>
+        <div class="po-supplier">SKF Bearings India</div>
+        <div class="po-qty">500 pcs</div>
+        <div class="po-date">📅 Order by next week — 18 days stock left</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-wa">📱 WhatsApp</button>
+      <button class="btn-edit">✏️ Edit</button>
+    </div>
+  </div>
+
+  <div class="po-card">
+    <div class="po-left">
+      <div class="po-icon" style="background:#10b98120">🛢️</div>
+      <div>
+        <div class="po-name">Hydraulic Oil</div>
+        <div class="po-supplier">Castrol India</div>
+        <div class="po-qty">400 L</div>
+        <div class="po-date">📅 Order by next week — 25 days stock left</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-wa">📱 WhatsApp</button>
+      <button class="btn-edit">✏️ Edit</button>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:flex;gap:10px">
+    <button class="btn-primary" style="flex:1">📱 Send All WhatsApp Orders</button>
+    <button class="btn-ghost">📋 Export PO Sheet</button>
+  </div>
+</div>
+
+<!-- BOM -->
+<div id="screen-bom" class="screen">
+  <div class="page-title">🧩 Bill of Materials (BOM)</div>
+  <p class="page-sub">Raw materials required per unit for each product</p>
+
+  <div style="margin-top:20px">
+    <div class="bom-product">
+      <div class="bom-header">
+        <div><div class="bom-name">Product A</div><div class="bom-code">SKU: PROD-A-001</div></div>
+        <span class="ok-chip">Active</span>
+      </div>
+      <div class="bom-row"><div><div class="bom-mat">Steel Rods</div><div class="bom-unit">Raw Material</div></div><div class="bom-qty">2.0 kg / unit</div></div>
+      <div class="bom-row"><div><div class="bom-mat">Plastic Grade A</div><div class="bom-unit">Raw Material</div></div><div class="bom-qty">1.2 kg / unit</div></div>
+      <div class="bom-row"><div><div class="bom-mat">Bearing 6205</div><div class="bom-unit">Mechanical</div></div><div class="bom-qty">2 pcs / unit</div></div>
+    </div>
+
+    <div class="bom-product">
+      <div class="bom-header">
+        <div><div class="bom-name">Product B</div><div class="bom-code">SKU: PROD-B-001</div></div>
+        <span class="ok-chip">Active</span>
+      </div>
+      <div class="bom-row"><div><div class="bom-mat">Steel Rods</div><div class="bom-unit">Raw Material</div></div><div class="bom-qty">1.5 kg / unit</div></div>
+      <div class="bom-row"><div><div class="bom-mat">Copper Wire</div><div class="bom-unit">Electrical</div></div><div class="bom-qty">0.5 m / unit</div></div>
+      <div class="bom-row"><div><div class="bom-mat">Plastic Grade A</div><div class="bom-unit">Raw Material</div></div><div class="bom-qty">0.8 kg / unit</div></div>
+      <div class="bom-row"><div><div class="bom-mat">Hydraulic Oil</div><div class="bom-unit">Consumable</div></div><div class="bom-qty">0.02 L / unit</div></div>
+    </div>
+
+    <div class="bom-product">
+      <div class="bom-header">
+        <div><div class="bom-name">Product C</div><div class="bom-code">SKU: PROD-C-001</div></div>
+        <span class="ok-chip">Active</span>
+      </div>
+      <div class="bom-row"><div><div class="bom-mat">Aluminium Sheet</div><div class="bom-unit">Raw Material</div></div><div class="bom-qty">3.0 kg / unit</div></div>
+      <div class="bom-row"><div><div class="bom-mat">Copper Wire</div><div class="bom-unit">Electrical</div></div><div class="bom-qty">1.2 m / unit</div></div>
+      <div class="bom-row"><div><div class="bom-mat">Bearing 6205</div><div class="bom-unit">Mechanical</div></div><div class="bom-qty">4 pcs / unit</div></div>
+    </div>
+  </div>
+
+  <button class="btn-primary" style="width:100%;margin-top:4px">+ Add New Product BOM</button>
+</div>
+
+<!-- WHAT IF -->
+<div id="screen-whatif" class="screen">
+  <div class="page-title">🔮 What-If Scenarios</div>
+  <p class="page-sub">Simulate different scenarios before committing to a plan</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px" id="scenario-grid">
+    <div class="scenario-card selected" onclick="selectScenario(this,'s1')">
+      <div class="scenario-title">📈 Demand +20%</div>
+      <div class="scenario-desc">What if this week's orders increase by 20%?</div>
+      <div class="scenario-result" style="color:var(--red)">⚠️ Capacity shortfall: 180 units<br/>Need Sunday overtime shift</div>
+    </div>
+    <div class="scenario-card" onclick="selectScenario(this,'s2')">
+      <div class="scenario-title">🔩 Steel Delay +3 days</div>
+      <div class="scenario-desc">What if Steel Rods delivery is delayed by 3 days?</div>
+      <div class="scenario-result" style="color:var(--amber)">⚠️ Wed–Thu production drops by 30%<br/>Switch Line A to Product C</div>
+    </div>
+    <div class="scenario-card" onclick="selectScenario(this,'s3')">
+      <div class="scenario-title">⚙️ Line B Breakdown</div>
+      <div class="scenario-desc">What if Line B goes down for maintenance?</div>
+      <div class="scenario-result" style="color:var(--red)">⚠️ Output drops to 1,440 units<br/>38% below target</div>
+    </div>
+    <div class="scenario-card" onclick="selectScenario(this,'s4')">
+      <div class="scenario-title">💰 Cost Optimise</div>
+      <div class="scenario-desc">What's the minimum cost plan to meet demand?</div>
+      <div class="scenario-result" style="color:var(--green)">✅ Save ₹45,000 by resequencing<br/>Product B before Product A</div>
+    </div>
+  </div>
+
+  <div id="scenario-detail" style="margin-top:20px">
+    <div class="ai-box-amber">
+      <div class="ai-tag" style="color:var(--amber)">🧠 AI Simulation — Demand +20%</div>
+      <p class="ai-content" style="font-size:13px">
+        If demand increases by 20% this week, required output becomes <strong style="color:var(--text)">2,808 units</strong> vs max capacity of <strong style="color:var(--text)">2,520 units</strong>. 
+        Shortfall: <strong style="color:var(--red)">288 units</strong>.<br/><br/>
+        AI Recommendation: Add a <strong style="color:var(--amber)">Sunday overtime shift on Line A</strong> (180 units) and prioritise high-margin Product A over Product C to cover 85% of shortfall. Communicate partial delivery to Product C customers.
+      </p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-primary">✅ Apply This Plan</button>
+      <button class="btn-ghost">📊 Compare Plans</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end content -->
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+const scenarioTexts = {
+  s1: { title: 'Demand +20%', text: 'If demand increases by 20% this week, required output becomes <strong style="color:var(--text)">2,808 units</strong> vs max capacity of <strong style="color:var(--text)">2,520 units</strong>. Shortfall: <strong style="color:var(--red)">288 units</strong>.<br/><br/>AI Recommendation: Add a <strong style="color:var(--amber)">Sunday overtime shift on Line A</strong> (180 units) and prioritise high-margin Product A over Product C.' },
+  s2: { title: 'Steel Delay +3 Days', text: 'If Steel Rods delivery is delayed by 3 days, Wednesday and Thursday production will be impacted. <strong style="color:var(--red)">−240 units</strong> across those days.<br/><br/>AI Recommendation: <strong style="color:var(--amber)">Switch Line A to Product C</strong> on Wed–Thu (does not need steel). Reroute steel-dependent orders to Friday–Saturday.' },
+  s3: { title: 'Line B Breakdown', text: 'With Line B down, maximum daily output drops from 420 to <strong style="color:var(--red)">240 units/day</strong>. Weekly output: 1,440 units vs target of 2,340.<br/><br/>AI Recommendation: <strong style="color:var(--amber)">Run Line A on 3 shifts</strong> (adding night shift) to recover 360 extra units. Delay Product C orders by 1 week and inform customers.' },
+  s4: { title: 'Cost Optimisation', text: 'By resequencing production — running Product B batches before Product A — setup changeover time reduces by <strong style="color:var(--green)">2.5 hours/week</strong>.<br/><br/>AI Recommendation: Sequence: <strong style="color:var(--amber)">Product C → Product B → Product A</strong> on both lines. Estimated weekly saving: <strong style="color:var(--green)">₹45,000</strong> in labour + energy costs.' }
+};
+
+function selectScenario(el, key) {
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const d = scenarioTexts[key];
+  document.getElementById('scenario-detail').innerHTML = `
+    <div class="ai-box-amber">
+      <div class="ai-tag" style="color:var(--amber)">🧠 AI Simulation — ${d.title}</div>
+      <p class="ai-content" style="font-size:13px">${d.text}</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-primary">✅ Apply This Plan</button>
+      <button class="btn-ghost">📊 Compare Plans</button>
+    </div>`;
+}
+</script>
+</body>
+</html>
